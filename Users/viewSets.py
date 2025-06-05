@@ -17,6 +17,7 @@ class UserRegisterViewset(ModelViewSet):
     serializer_class = Userserializer
     permission_classes = [AllowAny] 
 
+
 class teamsViewset(ModelViewSet):
     queryset = teams
     serializer_class = teamSerializer

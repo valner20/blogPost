@@ -17,13 +17,15 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path,include
 from rest_framework.routers import DefaultRouter
-from Users.viewSets import UserRegisterViewset,UserViewset
-from Post.viewSet import PostViewSet
+from Users.viewSets import UserRegisterViewset,UserViewset,teamsViewset
+from Post.viewSet import PostViewSet, CommentViewSet, LikesViewSet
 router = DefaultRouter()
 router.register('register',UserRegisterViewset, basename='register') 
 router.register('profile',UserViewset, basename='profile') 
-router.register('registerTeams',UserRegisterViewset, basename='teams') 
+router.register('registerTeams',teamsViewset, basename='teams') 
 router.register('Post',PostViewSet, basename='Post') 
+router.register('comment',CommentViewSet, basename='comment') 
+router.register('likes',LikesViewSet, basename='likes') 
 
 
 
