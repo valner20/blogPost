@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Post, Comments, Likes
-from .permissions import Permissions
+from .permissions import CanRead
 
 class PostSerializer(serializers.ModelSerializer):
     options = [
@@ -86,45 +86,32 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = ['id', 'post','postTitle', 'user', 'content', 'created_at']
         read_only_fields = ['id', 'user', 'created_at']
 
-    def __init__(self, *args, **kwargs):    
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         request = self.context.get("request")
-        if request:
-            permissionss = Permissions()
-            visible_posts = [post.id for post in Post.objects.all() if permissionss.has_read_permission(request,self, post)]
-            self.fields['post'].queryset = Post.objects.filter(id__in=visible_posts)
+        if request and request.user.is_authenticated:
+            permissions = CanRead()
+            self.fields['post'].queryset = permissions.get_visible_posts(request, self)
 
     def create(self, validated_data):
-        request = self.context.get("request")       
-        validated_data["user"] = request.user if request else None
+        validated_data["user"] = self.context["request"].user
         return super().create(validated_data)
-
-
-
-
-
 
 
 class LikeSerializer(serializers.ModelSerializer):
     post = serializers.PrimaryKeyRelatedField(queryset=Post.objects.none())
-
     class Meta:
         model = Likes
         fields = ['id', 'post', 'user']
         read_only_fields = ['id', 'user']
 
-    def __init__(self, *args, **kwargs):    
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         request = self.context.get("request")
-        
-        if request:
-            permissionss = Permissions()
-            visible_posts = [post.id for post in Post.objects.all() if permissionss.has_read_permission(request,self, post)]
-            self.fields['post'].queryset = Post.objects.filter(id__in=visible_posts)
+        if request and request.user.is_authenticated:
+            permissions = CanRead()
+            self.fields['post'].queryset = permissions.get_visible_posts(request, self)
 
     def create(self, validated_data):
-        request = self.context.get("request")
-        if request:
-            validated_data["user"] = request.user
-
+        validated_data["user"] = self.context["request"].user
         return super().create(validated_data)

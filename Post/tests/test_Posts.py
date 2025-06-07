@@ -18,6 +18,39 @@ def create_author(create_team):
         email="author@example.com"
     )
 
+@pytest.fixture
+def create_many_posts():
+    team = teams.objects.create(name="Pagination Team")
+    author = userBlog.objects.create_user(username="pagination_user", password="123456", email="paginator@test.com", team=team)
+
+    posts = []
+    for i in range(25):
+        post = Post.objects.create(
+            title=f"Post #{i}",
+            content="Contenido de prueba",
+            permissions=17,  
+            author=author
+        )
+        posts.append(post)
+    return author
+
+
+@pytest.fixture
+def create_many_postsWithNoAccess():
+    team = teams.objects.create(name="Pagination Team")
+    author = userBlog.objects.create_user(username="pagination_user", password="123456", email="paginator@test.com", team=team)
+
+    posts = []
+    for i in range(25):
+        post = Post.objects.create(
+            title=f"Post #{i}",
+            content="Contenido de prueba",
+            permissions=0,  
+            author=author
+        )
+        posts.append(post)
+    return author
+
 
 def test_createPost(db):
     team = teams.objects.create(name='Test Team')
@@ -112,6 +145,7 @@ def test_canReadPublic(db, create_author):
 
     assert response.status_code == 200
 
+
 def test_cant_readAuthenticated(db, create_author):
     team2 = teams.objects.create(id=2, name="name")
     author = create_author
@@ -164,6 +198,7 @@ def test_canReadTeam(db, create_author):
     response = client.get(url)
 
     assert response.status_code == 200
+    assert response.data["title"] == "Test Post"
 
 def test_privatePost(db, create_author):
     author = create_author
@@ -465,3 +500,57 @@ def test_postDeleteCascadesLikesAndComments(db):
 
     assert Likes.objects.count() == 0
     assert Comments.objects.count() == 0
+
+def test_posts_pagination(db, create_many_posts):
+    user = create_many_posts
+    client = APIClient()
+    client.force_authenticate(user=user)
+
+    response1 = client.get("/Post/")  
+    assert response1.status_code == 200
+
+    data1 = response1.data
+    assert data1["total_count"] == 25
+    assert len(data1["result"]) == 10  
+    assert data1["next"] is not None
+
+    next_url = data1["next"]
+    response2 = client.get(next_url)
+    assert response2.status_code == 200
+
+    data2 = response2.data
+    assert data2["total_count"] == 25
+    assert len(data2["result"]) == 10  
+    assert data2["previous"] is not None
+
+
+    next_url = data2["next"]
+    response3 = client.get(next_url)
+    assert response3.status_code == 200
+
+    data3 = response3.data
+    assert data3["total_count"] == 25
+    assert len(data3["result"]) == 5  
+    assert data3["next"] is None
+
+def test_postsListWithNoAccess(db, create_many_postsWithNoAccess):
+    user = create_many_postsWithNoAccess
+
+    client = APIClient()
+    client.force_authenticate(user=user)
+
+    response1 = client.get("/Post/")  
+    assert response1.status_code == 200
+
+    data1 = response1.data
+    assert data1["total_count"] == 25
+    assert len(data1["result"]) == 10  
+    assert data1["next"] is not None
+    client.logout()
+    team = teams.objects.create(id = 2,name="uno") 
+    user2 = userBlog.objects.create_user(username ="a", email = "a@gmail.com", team = team)
+    client.force_authenticate(user = user2)
+    response = client.get("/Post/")
+    assert response.status_code == 200
+    assert response.data["total_count"] == 0
+    assert response.data["result"] == []

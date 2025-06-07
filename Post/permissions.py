@@ -1,4 +1,4 @@
-from rest_framework.permissions import BasePermission
+from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 def permissionsAux(permissions):
 # fragmento el entero de permisos en sus componentes, luego lo devuelvo como un diccionario, todo me dara un numero de entre 0 y 2
@@ -54,11 +54,32 @@ class Permissions(BasePermission):
         return False
     
 
-class IsAuthor(BasePermission):
+class CanRead(BasePermission):
+
+    def get_visible_posts(self, request, view):
+        from Post.models import Post  
+        permissions = Permissions()
+        return Post.objects.filter(
+            id__in=[+
+                post.id for post in Post.objects.all()
+                if permissions.has_read_permission(request, view, post)
+                ]
+        )
+    
+class CanReadOrAuthorDelete(BasePermission):
+
+    def has_permission(self, request, view):
+        if request.method == 'POST':
+            return bool(request.user and request.user.is_authenticated)
+
+        if request.method in SAFE_METHODS:
+            return True
+
+     
+        return bool(request.user and request.user.is_authenticated)
 
     def has_object_permission(self, request, view, obj):
-        if request.method in ['GET', 'HEAD', 'OPTIONS']:
-            permissions = Permissions()
-            return permissions.has_read_permission(self,request,view, obj)  
+        if request.method in SAFE_METHODS:
+            perms = Permissions()
+            return perms.has_read_permission(request, view, obj.post)
         return obj.user == request.user
-    

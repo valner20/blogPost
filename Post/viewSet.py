@@ -4,9 +4,9 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.response import Response
 
 from rest_framework import status
-from .permissions import Permissions, IsAuthor
+from .permissions import Permissions, CanReadOrAuthorDelete, CanRead
 from .serializers import PostSerializer, CommentSerializer, LikeSerializer
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from .pagination import PostPaginattion, LikesPaginattion, commentsPaginattion
 class PostViewSet(ModelViewSet): 
     queryset = Post.objects.all()
@@ -46,80 +46,38 @@ class PostViewSet(ModelViewSet):
     
 
 class CommentViewSet(ModelViewSet):
+    queryset = Likes.objects.all().order_by('id')
     serializer_class = CommentSerializer
-    permission_classes = [IsAuthenticated, IsAuthor]
+    permission_classes = [CanReadOrAuthorDelete]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['post', 'user']
     pagination_class = commentsPaginattion
     http_method_names = ['get', 'post', 'delete', 'head', 'options']    
-    def get_queryset(self):
-        user = self.request.user
-        permissions = Permissions()
-        if user.is_authenticated:
-            visiblePosts = [post for post in Post.objects.all().order_by('-created_at') if permissions.has_object_permission(self.request,self, post)]
-            visibleComments = Comments.objects.filter(post__in=visiblePosts).order_by('-created_at')
-            return visibleComments
-        visiblePosts = Post.objects.filter(permissions__gte=8)
-        return visibleComments
-    
 
-    def retrieve(self, request, pk = None):
-        instance = self.get_object()
-        if not Permissions().has_object_permission(request, self, instance.post):
-            return Response({"detail": "You do not have   to view this comment."}, status=status.HTTP_404_NOT_FOUND)
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data)
-    
-    def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
-    
+    def get_queryset(self):
+            user = self.request.user
+            permissions = CanRead()
+            if user.is_authenticated:
+                visible_posts_qs = permissions.get_visible_posts(self.request, self)
+                return Comments.objects.filter(post__in=visible_posts_qs).order_by('-created_at')
+            
+            visible_posts_qs = Post.objects.filter(permissions__gte=8)
+            return Comments.objects.filter(post__in=visible_posts_qs).order_by('-created_at')
 
 class LikesViewSet(ModelViewSet):
-    queryset = Likes.objects.all()
+    queryset = Likes.objects.all().order_by('id')
     serializer_class = LikeSerializer
-    permission_classes = [IsAuthenticated, IsAuthor]
+    permission_classes = [CanReadOrAuthorDelete]
     pagination_class = LikesPaginattion
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['post', 'user']
-    
     http_method_names = ['get', 'post', 'delete', 'head', 'options']
 
     def get_queryset(self):
         user = self.request.user
-        permissions = Permissions()
-
+        permissions = CanRead()
         if user.is_authenticated:
-            visiblePosts = [
-                post for post in Post.objects.all().order_by('id')
-                if permissions.has_object_permission(self.request, self, post)
-            ]
-            return Likes.objects.filter(post__in=visiblePosts).order_by('id')
-
-        visiblePosts = Post.objects.filter(permissions__gte=8)
-        return Likes.objects.filter(post__in=visiblePosts).order_by('id')
-    
-
-    def retrieve(self, request, pk=None):
-        instance = self.get_object()
-        if not Permissions().has_object_permission(request, self, instance.post):
-            return Response({"detail": "You do not have permission to view this comment."}, status=status.HTTP_403_FORBIDDEN)
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data)
-
-    
-    def list(self, request):
-        queryset = self.filter_queryset(self.get_queryset())
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
-    
-    
+            visible_posts_qs = permissions.get_visible_posts(self.request, self)
+            return Likes.objects.filter(post__in=visible_posts_qs).order_by('id')
+        visible_posts_qs = Post.objects.filter(permissions__gte=8)
+        return Likes.objects.filter(post__in=visible_posts_qs).order_by('id')
