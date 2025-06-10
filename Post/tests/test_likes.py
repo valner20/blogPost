@@ -85,7 +85,7 @@ def test_unauthenticated_cannot_like(db, create_post):
     assert response.status_code == 403
 
 
-def test_cantlLikePostWithNoAccess(db):
+def test_cantlLikePostWithNoAccessOnlyTeam(db):
     team = teams.objects.create(name='Isolated Team')
     author = userBlog.objects.create_user(username='hiddenauthor', password="123456", team=team)
     post = Post.objects.create(
@@ -163,9 +163,7 @@ def test_likeOnFilteredPostwithNoAccess(db):
     client = APIClient()
     client.force_authenticate(user=outsider)
     response = client.get(f"/likes/?post={post.id}")
-    assert response.status_code == 200
-    assert response.data["result"] == []
-    assert response.data["total_count"] == 0
+    assert response.status_code == 404
 
 def test_likesFilteredPost(db):
     team1 = teams.objects.create(name='Team1')
@@ -244,3 +242,65 @@ def test_likes_pagination(db, create_many_likes):
     assert data2["total_count"] == 25
     assert len(data2["result"]) == 5
     assert data2["previous"] is not None
+
+def test_likesFilteredunaccesibleOPost(db):
+    team1 = teams.objects.create(name="Team A")
+    team2 = teams.objects.create(name="Team B")
+
+    author = userBlog.objects.create_user(username="author", password="123", team=team1, email="a@a.com")
+    outsider = userBlog.objects.create_user(username="outsider", password="123", team=team2, email="b@b.com")
+
+    post = Post.objects.create(title="Private Post", content="No debes verlo", permissions=0, author=author)
+    Likes.objects.create(post=post, user=author)
+
+    client = APIClient()
+    client.force_authenticate(user=outsider)
+
+    response = client.get(f"/comments/?post={post.id}")
+    assert response.status_code == 404
+
+def test_likesFilteredunaccesibleUser(db):
+    team1 = teams.objects.create(name="Team A")
+    team2 = teams.objects.create(name="Team B")
+
+    author = userBlog.objects.create_user(username="author", password="123", team=team1, email="a@a.com")
+    outsider = userBlog.objects.create_user(username="outsider", password="123", team=team2, email="b@b.com")
+
+    post = Post.objects.create(title="Private Post", content="No debes verlo", permissions=0, author=author)
+    Likes.objects.create(post=post, user=author)
+
+    client = APIClient()
+    client.force_authenticate(user=outsider)
+
+    response = client.get(f"/likes/?user=9999")
+    assert response.status_code == 404
+
+
+def test_list_comments_by_user_and_post(db, create_post):
+    post = create_post
+
+    user1 = userBlog.objects.create_user(
+        username='liker',
+        password='123456',
+        team=post.author.team,
+        email='liker_user1@example.com'
+    )
+    user2 = userBlog.objects.create_user(
+        username='liker_user2',
+        password='123456',
+        team=post.author.team,
+        email='liker_user2@example.com'
+    )
+
+    Likes.objects.create(post=post, user=user1)
+    Likes.objects.create(post=post, user=user2)
+
+    client = APIClient()
+    client.force_authenticate(user=user1)
+
+    url = f"/likes/?post={post.id}&user={user1.id}"
+    response = client.get(url)
+    assert response.status_code == 200
+    data = response.data
+    assert data["total_count"] == 1
+    assert data["result"][0]["user"] == user1.id

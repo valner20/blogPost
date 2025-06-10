@@ -6,8 +6,8 @@ class Userserializer(serializers.ModelSerializer):
     class Meta:
         model = userBlog
         fields = ['username', 'password','email']
-        write_only_fields = ['password']
-        
+        extra_kwargs = {'password': {'write_only': True}}
+
     def create(self, validated_data):
         password = validated_data.pop('password')
         user = userBlog(**validated_data)
@@ -15,11 +15,7 @@ class Userserializer(serializers.ModelSerializer):
         user.save()
         return user
         
-class ProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = userBlog
-        fields = ['username', 'email', 'team', 'role']
-        read_only_fields = ['role', 'team']
+
     
     
 class teamSerializer(serializers.ModelSerializer):

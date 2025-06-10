@@ -8,7 +8,7 @@ class teams(models.Model):
        return self.name
     
 class userBlog(AbstractUser):
-        team = models.ForeignKey(teams, on_delete=models.SET(1),default= 1, null = True)
+        team = models.ForeignKey(teams, on_delete=models.SET(1), null = True)
         role = models.CharField(default='blogger')   
         email = models.EmailField(unique=True)     
 
@@ -17,6 +17,9 @@ class userBlog(AbstractUser):
 
 
         def save(self, *args, **kwargs):
+            if not self.team:
+                self.team,_ = teams.objects.get_or_create(id = 1, defaults={'name': 'default'})
+
             if self.is_staff:
                 self.role = 'admin'          
             if self._state.adding:
@@ -24,5 +27,5 @@ class userBlog(AbstractUser):
                     identify_hasher(self.password)
                 except Exception:
                     self.set_password(self.password)
-            return super().save()
+            return super().save(*args, **kwargs)
           

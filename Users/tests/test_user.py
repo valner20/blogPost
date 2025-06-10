@@ -139,6 +139,16 @@ def test_login(db):
     result = client.login(username = "xdxd", password = "zapata")
     assert result is True
 
+def test_TeamCascade(db):
+    team = teams.objects.create(id = 1, name="Equipo Prueba")
+    team2 = teams.objects.create(id = 2, name="try")
+
+    user = userBlog.objects.create_user(username = "xd", password = "zapata", email = "xdxd", team = team2)
+    team2.delete()
+    user.refresh_from_db()
+    assert user.team.name == "Equipo Prueba"
+    assert user.team.id == 1
+    
 
 def test_wrongPassword(db):
     team = teams.objects.create(id = 1, name="Equipo Prueba")
@@ -164,5 +174,18 @@ def test_wrongUsername(db):
     assert result is False
 
 
-
+def test_register_alreadylogged(db):
+    client = APIClient()
+    user = userBlog.objects.create(username = "xd", password = "zapata")
+    client.force_authenticate(user = user)
+    payload = {
+            "username": "pedroparamo",
+            "password": "password test.",
+            "email": "xdxdxdxd@gmail.com",
+        }
+    result = client.post("/register/", payload, format='json')
+    assert result.status_code == 403
+    assert userBlog.objects.count() == 1
+    user = userBlog.objects.first()
+    assert user.username == "xd"
 

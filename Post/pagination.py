@@ -6,6 +6,7 @@ class StandardPagination(PageNumberPagination):
     page_size = 10
 
     def get_paginated_response(self, data):
+        
         return Response({
             'current': self.page.number,
             'total': self.page.paginator.num_pages,

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import Post, Comments, Likes
-from .permissions import CanRead
-
+from .permissions import CanRead,Permissions
+from rest_framework.exceptions import NotFound
 class PostSerializer(serializers.ModelSerializer):
     options = [
         #3 niveles de permisos, cada uno con un valor diferente esto me asegura que puedo formar el entero de permisos en base a los niveles de permisos
@@ -92,6 +92,7 @@ class CommentSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             permissions = CanRead()
             self.fields['post'].queryset = permissions.get_visible_posts(request, self)
+
 
     def create(self, validated_data):
         validated_data["user"] = self.context["request"].user

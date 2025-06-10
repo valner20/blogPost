@@ -5,11 +5,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser
 from .models import userBlog, teams
-from .serializers import Userserializer, ProfileSerializer, teamSerializer
+from .serializers import Userserializer, teamSerializer
 
-class UserViewset(ModelViewSet):
-    queryset = userBlog.objects.all()
-    serializer_class = ProfileSerializer
+
 
    
 class UserRegisterViewset(ModelViewSet):
@@ -17,6 +15,15 @@ class UserRegisterViewset(ModelViewSet):
     serializer_class = Userserializer
     permission_classes = [AllowAny] 
 
+    def create(self, request, *args, **kwargs):
+        user = request.user
+        if user.is_authenticated:
+            return Response({"message": "You are arleady loged."}, status=status.HTTP_403_FORBIDDEN)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class teamsViewset(ModelViewSet):
     queryset = teams

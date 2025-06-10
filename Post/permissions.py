@@ -26,6 +26,8 @@ class Permissions(BasePermission):
 
     def has_write_permission(self, request,view, obj):
         user = request.user
+        if user.is_staff == True:
+            return True
         perms = permissionsAux(obj.permissions)
         if not user.is_authenticated:
             return False
@@ -42,6 +44,8 @@ class Permissions(BasePermission):
 
     def has_read_permission(self, request, view, obj):
         user = request.user
+        if user.is_staff == True:
+            return True
         perms = permissionsAux(obj.permissions)
         if user == obj.author:
             return True
