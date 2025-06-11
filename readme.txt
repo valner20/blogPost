@@ -66,7 +66,7 @@ The values represent access levels as follows:
 
     2 means read and edit access
 
-In the code, I handle permissions like this:
+In the code, It handle permissions like this:
 is_public * 9 + authenticated * 3 + team
 
 The numbers are managed in base 3 (ternary numbers), where each digit represents a permission level related to the post, which will later be decoded to determine access.
