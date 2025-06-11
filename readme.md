@@ -1,32 +1,63 @@
 
 **RAIZ_DEL_PROYECTO**/
+
 ├── manage.py
+
 ├── Post
-│   ├── admin.py
-│   ├── apps.py
-│   ├── __init__.py
-│   ├── models.py
-│   ├── pagination.py
-│   ├── permissions.py
-│   ├── serializers.py
-│   ├── tests
-│   │   ├── test_Comments.py
-│   │   ├── test_likes.py
-│   │   └── test_Posts.py
-│   ├── tests.py
-│   └── viewSet.py
+
+    │   ├── admin.py
+
+    │   ├── apps.py
+
+    │   ├── __init__.py
+
+    │   ├── models.py
+
+    │   ├── pagination.py
+
+    │   ├── permissions.py
+
+    │   ├── serializers.py
+
+    │   ├── tests
+
+    │   │   ├── test_Comments.py
+
+    │   │   ├── test_likes.py
+
+    │   │   └── test_Posts.py
+
+    │   ├── tests.py
+
+    │   └── viewSet.py
+
 ├── pytest.ini
+
 ├── requirements.txt
+
+
 └── Users
+    
     ├── admin.py
+
+
     ├── apps.py
+
     ├── __init__.py
+
     ├── models.py
+
     ├── serializers.py
+
     ├── tests
+
     │   └── test_user.py
+
     ├── tests.py
+
     └── viewSets.py
+
+
 
 
 Usage
@@ -98,15 +129,19 @@ Likes and comments are also based on these permissions. If a user can read a pos
 
 You can also retrieve the details of a like or comment by passing its ID as a URL parameter
 
-API Endpoints
+**API Endpoints**
 
-{
-  "register": "http://127.0.0.1:8000/register/",
-  "registerTeams": "http://127.0.0.1:8000/registerTeams/",
-  "Post": "http://127.0.0.1:8000/Post/",
-  "comment": "http://127.0.0.1:8000/comment/",
-  "likes": "http://127.0.0.1:8000/likes/"
-}
+
+      "register": "http://127.0.0.1:8000/register/". 
+      
+      "registerTeams": "http://127.0.0.1:8000/registerTeams/".
+    
+      "Post": "http://127.0.0.1:8000/Post/".
+    
+      "comment": "http://127.0.0.1:8000/comment/".
+    
+      "likes": "http://127.0.0.1:8000/likes/".
+
 
 
 Testing
