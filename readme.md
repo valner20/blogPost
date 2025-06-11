@@ -75,8 +75,8 @@ The numbers are managed in base 3 (ternary numbers), where each digit represents
 This approach is used to save columns in the database and keep the application more optimized.
 
 Likes and comments are also based on these permissions. If a user can read a post, they can like or comment on it. However, if the user is not authenticated, they won’t be able to like or comment on any post
-
-Likes
+***
+***Likes***
 
     List: /likes
         
@@ -84,8 +84,8 @@ Likes
 
     Use GET and POST methods on the URL
 
-
-Comments
+***
+***Comments***
 
     List: /comment
 
