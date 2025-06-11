@@ -64,21 +64,26 @@ The values represent access levels as follows:
 
     1 means read access
 
-    2 means read and edit access
+    2 means read and edit post access
 
-In the code, It handle permissions like this:
+An author always has full permissions on their post.
+
+In the code, permissions are handled like this:
 is_public * 9 + authenticated * 3 + team
 
 The numbers are managed in base 3 (ternary numbers), where each digit represents a permission level related to the post, which will later be decoded to determine access.
 This approach is used to save columns in the database and keep the application more optimized.
 
+Likes and comments are also based on these permissions. If a user can read a post, they can like or comment on it. However, if the user is not authenticated, they won’t be able to like or comment on any post
+
 Likes
 
     List: /likes
-
+        
     Filter: /likes/?post=i&user=id or separately
 
     Use GET and POST methods on the URL
+
 
 Comments
 
@@ -87,6 +92,11 @@ Comments
     Filter: /comment/?post=i&user=id or separately
 
     Use GET and POST methods on the URL
+
+    A comment can´t be updated after posting it but it can by deleted by its author
+    
+
+You can also retrieve the details of a like or comment by passing its ID as a URL parameter
 
 API Endpoints
 
